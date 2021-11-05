@@ -24,7 +24,7 @@ public class Address implements Serializable {
     @Getter @Setter
     @OneToOne
     @JoinColumn(name="id_municipality", nullable=false)
-    private Municipality municipality;
+    private Municipality id_municipality;
 
     @JsonIgnore
     @Getter @Setter
@@ -34,12 +34,12 @@ public class Address implements Serializable {
 
     @JsonIgnore
     @Getter @Setter
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name="id_contact", nullable=false)
-    private Contact contact;
+    private Contact id_contact;
 
-    @Getter @Setter @Column(name = "address1")
-    private String address3;
+    @Getter @Setter @Column(name = "address")
+    private String address;
 
     public Address(Object o, HttpStatus internalServerError) {
     }

@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Table(name = "municipality")
@@ -15,6 +16,12 @@ public class Municipality implements Serializable {
 
     @Getter @Setter @Column(name="municipality_name")
     private String municipality_name;
+
+    @OneToMany(mappedBy = "id_municipality")
+    private List<Address> addressList;
+    @OneToOne
+    @JoinColumn(name = "id_department")
+    private Department id_department;
 
     public Municipality(Object o, HttpStatus internalServerError) {
     }

@@ -4,10 +4,13 @@ import com.kodigo.agenda.demo.model.EmailType;
 import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.repository.IEmailTypeRepository;
 import com.kodigo.agenda.demo.service.IEmailTypeService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+
 @Service @Transactional
 public class EmailTypeImpl implements IEmailTypeService {
     private final IEmailTypeRepository emailTypeRepository;
@@ -20,24 +23,40 @@ public class EmailTypeImpl implements IEmailTypeService {
     }
 
     @Override
-    public EmailType findEmailTypeByID(Integer id_type_of_email) {
-        EmailType emailTypeTmp = emailTypeRepository.getById(id_type_of_email);
-        return emailTypeTmp;    }
+    public EmailType findEmailTypeByID(int id) throws Exception {
+        Optional<EmailType> emailTypeDB = emailTypeRepository.findById(id);
+        if (emailTypeDB.isPresent())
+            return emailTypeDB.get();
+        throw new RegisterExistException("The id of the EmailType no exist in the DataBase");
+    }
 
     @Override
-    public EmailType saveEmailType(EmailType emailType) {
+    public EmailType create(EmailType emailType) throws Exception, RegisterExistException {
+        Optional<EmailType> emailTypeDB = emailTypeRepository.findById(emailType.getId_type_of_email());
+        if (emailTypeDB.isPresent())
+            throw new RegisterExistException("The id of the EmailType already exist in the DataBase");
         return emailTypeRepository.save(emailType);
     }
 
     @Override
-    public EmailType updateEmailType(EmailType emailType) {
-        EmailType emailTypeTmp = emailTypeRepository.getById(emailType.getId_type_of_email());
-        return emailTypeRepository.save(emailTypeTmp);
+    public void update(EmailType emailType, int id) throws Exception, RegisterExistException {
+        Optional<EmailType> emailTypeDB = emailTypeRepository.findById(id);
+        if (emailTypeDB.isPresent()) {
+            emailType.setId_type_of_email(id);
+            emailTypeRepository.save(emailType);
+            return;
+        }
+        throw new RegisterExistException("The id of the EmailType no exist in the DataBase");
     }
 
     @Override
-    public void deleteEmailTypeById(Integer id_type_of_email) {
-        EmailType emailTypeTmp = emailTypeRepository.getById(id_type_of_email);
-        emailTypeRepository.delete(emailTypeTmp);
+    public void delete(int id) throws Exception, RegisterExistException {
+        Optional<EmailType> emailTypeDB = emailTypeRepository.findById(id);
+        if (emailTypeDB.isPresent()) {
+            emailTypeRepository.deleteById(id);
+            return;
+        }
+        throw new RegisterExistException("The id of the EmailType no exist in the DataBase");
     }
+
 }

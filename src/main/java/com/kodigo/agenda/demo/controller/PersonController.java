@@ -1,7 +1,8 @@
 package com.kodigo.agenda.demo.controller;
 
 import com.kodigo.agenda.demo.model.Person;
-import com.kodigo.agenda.demo.service.impl.PersonImpl;
+import com.kodigo.agenda.demo.service.IPersonService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,69 +16,68 @@ import java.util.List;
 @RestController
 @RequestMapping("/app/v1/person")
 public class PersonController {
-    /*@Autowired
-    private final IPersonService person;
-
-    public PersonController(IPersonService person) {
-        super();
-        this.person = person;
-    }*/
+    private IPersonService personService;
 
     @Autowired
-    private PersonImpl personImp;
-
-
-    @RequestMapping(value = "/api/person", method = RequestMethod.GET)
-    public List<Person> findAll() {
-        try{
-            List<Person> test = personImp.findAll();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<Person>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+    public PersonController(IPersonService personService) {
+        this.personService = personService;
     }
 
-    @RequestMapping(value = "/api/person/{id}", method = RequestMethod.GET)
-    public Person findPersonById(@PathVariable Integer id_person) {
-        try{
-            return personImp.findPersonByID(id_person);
-        } catch (Exception e){
-            return new Person(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/api/person", method = RequestMethod.POST)
-    public ResponseEntity<Object> savePerson(@RequestBody Person person) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Person> get(@PathVariable("id") int id) {
         try {
-            Person personSaved = personImp.savePerson(person);
+            Person person = personService.get(id);
+            return new ResponseEntity<Person>(person, HttpStatus.OK);
+
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody Person person) {
+        try {
+            Person personSaved = personService.create(person);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(personSaved.getId_person()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/person", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updatePerson(@RequestBody Person person, @PathVariable Person person1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody Person person, @PathVariable int id) {
         try {
-            personImp.updatePerson(person1);
+            personService.update(person, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/person/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deletePerson(@PathVariable Integer id_person) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            personImp.deletePersonById(id_person);
+            personService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
 
+    @GetMapping("/find")
+    public List<Person> findAll() throws Exception {
+        return personService.findAll();
+    }
 }

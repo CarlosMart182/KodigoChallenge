@@ -1,13 +1,18 @@
 package com.kodigo.agenda.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.springframework.http.HttpStatus;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Table(name = "contact_type")
+@ToString @EqualsAndHashCode
+@AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ContactType implements Serializable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)

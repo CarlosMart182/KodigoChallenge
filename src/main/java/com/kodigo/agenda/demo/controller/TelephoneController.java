@@ -1,9 +1,11 @@
 package com.kodigo.agenda.demo.controller;
 
+import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.model.PhoneTypes;
 import com.kodigo.agenda.demo.model.Telephone;
 import com.kodigo.agenda.demo.service.IPhoneTypesService;
 import com.kodigo.agenda.demo.service.ITelephoneService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/app/v1/phone")
+@RequestMapping("/app/v1/telephone")
 public class TelephoneController {
     @Autowired
     private final ITelephoneService telephoneService;
@@ -23,54 +25,58 @@ public class TelephoneController {
         this.telephoneService = telephoneService;
     }
 
-    @RequestMapping(value = "/api/phone", method = RequestMethod.GET)
-    public List<Telephone> findTelephone() {
-        try{
-            List<Telephone> test = telephoneService.findTelephone();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<Telephone>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    @GetMapping("/find")
+    public List<Telephone> findAll() throws Exception {
+        return telephoneService.findTelephone();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Telephone> get(@PathVariable("id") int id) {
+        try {
+            Telephone telephone = telephoneService.findTelephoneByID(id);
+            return new ResponseEntity<Telephone>(telephone, HttpStatus.OK);
+
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/api/phone/{id}", method = RequestMethod.GET)
-    public Telephone findTelephoneById( @PathVariable Integer id_telephone) {
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody Telephone telephone) {
         try {
-            return telephoneService.findTelephoneByID(id_telephone);
-        } catch (Exception e){
-            return new Telephone (null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/api/phone", method = RequestMethod.POST)
-    public ResponseEntity<Object> saveTelephone(@RequestBody Telephone telephone) {
-        try {
-            Telephone telephoneSaved = telephoneService.saveTelephone(telephone);
+            Telephone telephoneSaved = telephoneService.create(telephone);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(telephoneSaved.getId_telephone()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/phone", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updateTelephone(@RequestBody Telephone telephone, @PathVariable Telephone telephone1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody Telephone telephone, @PathVariable int id) {
         try {
-            telephoneService.updateTelephone(telephone1);
+            telephoneService.update(telephone, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/phone/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deletePhoneTypesById(@PathVariable Integer id_telephone) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            telephoneService.deleteTelephoneById(id_telephone);
+            telephoneService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

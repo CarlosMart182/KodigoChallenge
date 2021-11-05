@@ -1,46 +1,67 @@
 package com.kodigo.agenda.demo.service.impl;
 
 import com.kodigo.agenda.demo.model.Contact;
-import com.kodigo.agenda.demo.model.Person;
+import com.kodigo.agenda.demo.model.ContactType;
 import com.kodigo.agenda.demo.repository.IContactRepository;
 import com.kodigo.agenda.demo.repository.IContactTypeRepository;
 import com.kodigo.agenda.demo.service.IContactService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-@Service @Transactional
+import java.util.Optional;
+
+@Service
 public class ContactImpl implements IContactService {
-    private final IContactRepository contactRepository;
-    public ContactImpl(IContactRepository contactRepository){
-        this.contactRepository = contactRepository;
-    }
-    @Override
-    public List<Contact> findAllContacts() {
-        return null;
-    }
 
-    @Override
-    public Contact findContactByID(Integer id_contact) {
-        Contact contactTmp = contactRepository.getById(id_contact);
-        return contactTmp;
+    private IContactRepository repository;
+    private  IContactTypeRepository contactTypeRepository;
+
+    public ContactImpl(IContactRepository repository, IContactTypeRepository contactTypeRepository) {
+        this.repository = repository;
+        this.contactTypeRepository = contactTypeRepository;
     }
 
     @Override
-    public Contact saveContact(Contact contact) {
-        return contactRepository.save(contact);
+    public List<Contact> findAll() throws Exception {
+        return (List<Contact>) repository.findAll();
+    }
+
+    @Override
+    public Contact create(Contact contact) throws Exception, RegisterExistException {
+        Optional<Contact> contactDB = repository.findById(contact.getId_contact());
+        if (contactDB.isPresent())
+            throw new RegisterExistException("The id of the Contact already exist in the DataBase");
+            return repository.save(contact);
 
     }
 
     @Override
-    public Contact updateContact(Contact contact) {
-        Contact contactTmp = contactRepository.getById(contact.getId_contact());
-        return contactRepository.save(contactTmp);
+    public void update(Contact contact, int id) throws Exception, RegisterExistException {
+        Optional<Contact> contactDB = repository.findById(id);
+        if (contactDB.isPresent()) {
+            contact.setId_contact(id);
+            repository.save(contact);
+            return;
+        }
+        throw new RegisterExistException("The id of the Contact no exist in the DataBase");
     }
 
     @Override
-    public void deleteContactById(Integer id_contact) {
-        Contact contactTmp = contactRepository.getById(id_contact);
-        contactRepository.delete(contactTmp);
+    public void delete(int id) throws Exception, RegisterExistException {
+        Optional<Contact> contactDB = repository.findById(id);
+        if (contactDB.isPresent()) {
+            repository.deleteById(id);
+            return;
+        }
+        throw new RegisterExistException("The id of the Contact no exist in the DataBase");
+    }
+
+    @Override
+    public Contact get(int id) throws Exception, RegisterExistException {
+        Optional<Contact> contactDB = repository.findById(id);
+        if (contactDB.isPresent())
+            return contactDB.get();
+        throw new RegisterExistException("The id of the Contact no exist in the DataBase");
     }
 }

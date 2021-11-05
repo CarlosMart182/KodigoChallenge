@@ -1,7 +1,9 @@
 package com.kodigo.agenda.demo.controller;
 
+import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.model.PhoneTypes;
 import com.kodigo.agenda.demo.service.IPhoneTypesService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,54 +23,57 @@ public class PhoneTypeController {
         this.phoneTypesService = phoneTypesService;
     }
 
-    @RequestMapping(value = "/api/phone_type", method = RequestMethod.GET)
-    public List<PhoneTypes> getPhoneType() {
-        try{
-            List<PhoneTypes> test = phoneTypesService.getPhoneType();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<PhoneTypes>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    @GetMapping("/{id}")
+    public ResponseEntity<PhoneTypes> get(@PathVariable("id") int id) {
+        try {
+            PhoneTypes phoneTypes = phoneTypesService.findPhoneTypesByID(id);
+            return new ResponseEntity<PhoneTypes>(phoneTypes, HttpStatus.OK);
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/api/phone_type/{id}", method = RequestMethod.GET)
-    public PhoneTypes findPhoneTypesById( @PathVariable Integer id_type_of_phone) {
-        try {
-            return phoneTypesService.findPhoneTypesByID(id_type_of_phone);
-        } catch (Exception e){
-            return new PhoneTypes (null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @GetMapping("/find")
+    public List<PhoneTypes> findAll() throws Exception {
+        return phoneTypesService.getPhoneType();
     }
 
-    @RequestMapping(value = "/api/phone_type", method = RequestMethod.POST)
-    public ResponseEntity<Object> savePhoneTypes(@RequestBody PhoneTypes phoneTypes) {
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody PhoneTypes phoneTypes) {
         try {
-            PhoneTypes phoneTypesSaved = phoneTypesService.savePhoneTypes(phoneTypes);
+            PhoneTypes phoneTypesSaved = phoneTypesService.create(phoneTypes);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(phoneTypesSaved.getId_type_of_phone()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/phone_type", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updatePhoneTypes(@RequestBody PhoneTypes phoneTypes, @PathVariable PhoneTypes phoneTypes1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody PhoneTypes phoneTypes, @PathVariable int id) {
         try {
-            phoneTypesService.updatePhoneTypes(phoneTypes1);
+            phoneTypesService.update(phoneTypes, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/phone_type/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deletePhoneTypesById(@PathVariable Integer id_type_of_phone) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            phoneTypesService.deletePhoneTypesById(id_type_of_phone);
+            phoneTypesService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

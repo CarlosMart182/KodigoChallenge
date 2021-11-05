@@ -1,7 +1,10 @@
 package com.kodigo.agenda.demo.controller;
 
 import com.kodigo.agenda.demo.model.Address;
+import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.service.IAddressService;
+import com.kodigo.agenda.demo.service.IPersonService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,63 +18,68 @@ import java.util.List;
 @RestController
 @RequestMapping("/app/v1/address")
 public class AddressController {
-    @Autowired
-    private final IAddressService addressService;
+    private IAddressService addressService;
 
+    @Autowired
     public AddressController(IAddressService addressService) {
         this.addressService = addressService;
     }
 
-    @RequestMapping(value = "/api/address", method = RequestMethod.GET)
-    public List<Address> getAddress() {
-        try{
-            List<Address> test = addressService.getAddress();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<Address>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    @GetMapping("/find")
+    public List<Address> findAll() {
+        return addressService.getAddress();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Address> get(@PathVariable("id") int id) {
+        try {
+            Address address = addressService.get(id);
+            return new ResponseEntity<Address>(address, HttpStatus.OK);
+
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/api/address/{id}", method = RequestMethod.GET)
-    public Address findAddressById( @PathVariable Integer id_address) {
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody Address address) {
         try {
-            return addressService.findAddressByID(id_address);
-        } catch (Exception e){
-            return new Address (null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/api/address", method = RequestMethod.POST)
-    public ResponseEntity<Object> saveAddress(@RequestBody Address address) {
-        try {
-            Address addressSaved = addressService.saveAddress(address);
+            Address addressSaved = addressService.create(address);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(addressSaved.getId_address()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/address", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updateAddress(@RequestBody Address address, @PathVariable Address address1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody Address address, @PathVariable int id) {
         try {
-            addressService.updateAddress(address1);
+            addressService.update(address, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/address/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deleteAddressById(@PathVariable Integer id_address) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            addressService.deleteAddressById(id_address);
+            addressService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
         }
     }
-
 }

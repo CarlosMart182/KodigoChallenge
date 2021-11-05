@@ -17,33 +17,35 @@ import java.util.List;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Contact implements Serializable {
     @Id
-    @GeneratedValue(strategy=GenerationType.SEQUENCE)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Getter @Setter @Column(name = "id_contact")
     private int id_contact;
 
-    @JsonIgnore
-    @Getter @Setter
-    @OneToOne
-    @JoinColumn(name="id_type_of_contact", nullable=false)
-    private ContactType contactType;
 
     @Getter @Setter
-    @OneToMany(mappedBy="contact")
+    @Basic(optional = true)
+    @Column(name="id_type_of_contact")
+    private ContactType id_type_of_contact;
+
+    @Getter @Setter
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "id_telephone")
     private List<Telephone> telephoneList;
 
     @Getter @Setter
-    @OneToMany(mappedBy="contact")
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "id_address")
     private List<Address> addressList = new ArrayList<>();
 
     @Getter @Setter
-    @OneToMany(mappedBy="contact")
+    @OneToMany(mappedBy="id_contact")
     private List<Email> emailList = new ArrayList<>();
 
-    @JsonIgnore
-    @Getter @Setter
+
     @ManyToOne
+    @Basic(optional = true)
     @JoinColumn(name="id_person", nullable=false)
-    private Person person;
+    private Person id_person;
 
     public Contact(Object o, HttpStatus internalServerError) {
     }

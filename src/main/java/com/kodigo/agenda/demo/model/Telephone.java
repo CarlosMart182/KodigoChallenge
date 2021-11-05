@@ -26,13 +26,12 @@ public class Telephone implements Serializable {
     private PhoneTypes phoneTypes;
 
     @JsonIgnore
-    @Getter @Setter
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name="id_contact", nullable=false)
-    private Contact contact;
+    private Contact id_contact;
 
     @Getter @Setter @Column(name="phone_number")
-    private int phone_number;
+    private String phone_number;
 
     public Telephone(Object o, HttpStatus internalServerError) {
     }

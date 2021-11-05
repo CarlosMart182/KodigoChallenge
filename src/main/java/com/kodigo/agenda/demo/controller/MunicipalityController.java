@@ -2,8 +2,10 @@ package com.kodigo.agenda.demo.controller;
 
 import com.kodigo.agenda.demo.model.Address;
 import com.kodigo.agenda.demo.model.Municipality;
+import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.service.IAddressService;
 import com.kodigo.agenda.demo.service.IMunicipalityService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,54 +25,59 @@ public class MunicipalityController {
         this.municipalityService = municipalityService;
     }
 
-    @RequestMapping(value = "/api/municipality", method = RequestMethod.GET)
-    public List<Municipality> getMunicipality() {
-        try{
-            List<Municipality> test = municipalityService.getMunicipality();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<Municipality>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    @GetMapping("/{id}")
+    public ResponseEntity<Municipality> get(@PathVariable("id") int id) {
+        try {
+            Municipality municipality = municipalityService.findMunicipalityByID(id);
+            return new ResponseEntity<Municipality>(municipality, HttpStatus.OK);
+
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+
         }
     }
 
-    @RequestMapping(value = "/api/municipality/{id}", method = RequestMethod.GET)
-    public Municipality findMunicipalityById( @PathVariable Integer id_municipality) {
-        try {
-            return municipalityService.findMunicipalityByID(id_municipality);
-        } catch (Exception e){
-            return new Municipality (null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @GetMapping("/find")
+    public List<Municipality> findAll() throws Exception {
+        return municipalityService.getMunicipality();
     }
 
-    @RequestMapping(value = "/api/municipality", method = RequestMethod.POST)
-    public ResponseEntity<Object> saveMunicipality(@RequestBody Municipality municipality) {
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody Municipality municipality) {
         try {
-            Municipality municipalitySaved = municipalityService.saveMunicipality(municipality);
+            Municipality municipalitySaved = municipalityService.create(municipality);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(municipalitySaved.getId_municipality()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/municipality", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updateMunicipality(@RequestBody Municipality municipality, @PathVariable Municipality municipality1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody Municipality municipality, @PathVariable int id) {
         try {
-            municipalityService.updateMunicipality(municipality1);
+            municipalityService.update(municipality, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/municipality/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deleteMunicipalityById(@PathVariable Integer id_municipality) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            municipalityService.deleteMunicipalityById(id_municipality);
+            municipalityService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

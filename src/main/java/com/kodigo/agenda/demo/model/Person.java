@@ -32,7 +32,7 @@ public class Person implements Serializable {
     private List<Notes> notesList = new ArrayList<>();
 
     @Getter @Setter
-    @OneToMany(mappedBy="person")
+    @OneToMany(mappedBy="id_person")
     private  List<Contact> contactList = new ArrayList<>();
 
     public Person(Object o, HttpStatus internalServerError) {

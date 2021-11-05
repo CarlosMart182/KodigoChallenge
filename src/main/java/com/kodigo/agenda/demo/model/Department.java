@@ -1,10 +1,12 @@
 package com.kodigo.agenda.demo.model;
 
 import lombok.*;
+import net.bytebuddy.agent.builder.AgentBuilder;
 import org.springframework.http.HttpStatus;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Table(name = "department")
@@ -15,7 +17,10 @@ public class Department implements Serializable{
     private int id_department;
 
     @Getter @Setter @Column(name="department_name")
-    private String city_department;
+    private String department_name;
+
+    @OneToMany(mappedBy = "id_department")
+    private List<Municipality> municipalityList;
 
     public Department(Object o, HttpStatus internalServerError) {
     }

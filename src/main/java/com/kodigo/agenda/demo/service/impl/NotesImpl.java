@@ -4,10 +4,13 @@ import com.kodigo.agenda.demo.model.Notes;
 import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.repository.INotesRepository;
 import com.kodigo.agenda.demo.service.INotesService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+
 @Service @Transactional
 public class NotesImpl implements INotesService {
     private final INotesRepository notesRepository;
@@ -21,26 +24,41 @@ public class NotesImpl implements INotesService {
     }
 
     @Override
-    public Notes findNotesByID(Integer id_notes) {
-        Notes notesTmp = notesRepository.getById(id_notes);
-        return notesTmp;
+    public Notes findNotesByID(int id) throws Exception {
+        Optional<Notes> notesDB = notesRepository.findById(id);
+        if (notesDB.isPresent())
+            return notesDB.get();
+        throw new RegisterExistException("The id of the Notes no exist in the DataBase");
     }
 
     @Override
-    public Notes saveNotes(Notes notes) {
+    public Notes create(Notes notes) throws Exception {
+        Optional<Notes> notesDB = notesRepository.findById(notes.getId_notes());
+        if (notesDB.isPresent())
+            throw new RegisterExistException("The id of the Notes already exist in the DataBase");
         return notesRepository.save(notes);
-
     }
 
     @Override
-    public Notes updateNotes(Notes notes) {
-        Notes notesTmp = notesRepository.getById(notes.getId_notes());
-        return notesRepository.save(notesTmp);
+    public void update(Notes notes, int id) throws Exception {
+        Optional<Notes> notesDB = notesRepository.findById(id);
+        if (notesDB.isPresent()) {
+            notes.setId_notes(id);
+            notesRepository.save(notes);
+            return;
+        }
+        throw new RegisterExistException("The id of the Notes no exist in the DataBase");
     }
 
     @Override
-    public void deleteNotesById(Integer id_notes) {
-        Notes notesTmp = notesRepository.getById(id_notes);
-        notesRepository.delete(notesTmp);
+    public void delete(int id) throws Exception {
+        Optional<Notes> notesDB = notesRepository.findById(id);
+        if (notesDB.isPresent()) {
+            notesRepository.deleteById(id);
+            return;
+        }
+        throw new RegisterExistException("The id of the Notes no exist in the DataBase");
     }
+
+
 }

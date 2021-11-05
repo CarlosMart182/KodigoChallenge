@@ -3,6 +3,7 @@ package com.kodigo.agenda.demo.controller;
 import com.kodigo.agenda.demo.model.Department;
 import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.service.IDepartmentService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,57 +24,60 @@ public class DepartmentController {
         this.departmentService = departmentService;
     }
 
-    @RequestMapping(value = "/api/department", method = RequestMethod.GET)
-    public List<Department> getDepartment() {
-        try{
-            List<Department> test = departmentService.getDepartment();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<Department>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
-    @RequestMapping(value = "/api/department/{id}", method = RequestMethod.GET)
-    public Department findDepartmentById(@PathVariable Integer id_department) {
-        try{
-            return departmentService.findDepartmentByID(id_department);
-        } catch (Exception e){
-            return new Department(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/api/department", method = RequestMethod.POST)
-    public ResponseEntity<Object> saveDepartment(@RequestBody Department department) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Department> get(@PathVariable("id") int id_department) {
         try {
-            Department departmentSaved = departmentService.saveDepartment(department);
+            Department department = departmentService.getDepartmentByID(id_department);
+            return new ResponseEntity<Department>(department, HttpStatus.OK);
+
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
+
+    @GetMapping("/find")
+    public List<Department> findAll() throws Exception {
+        return departmentService.getDepartment();
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody Department department) {
+        try {
+            Department departmentSaved = departmentService.create(department);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(departmentSaved.getId_department()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/department", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updateDepartment(@RequestBody Department department, @PathVariable Department department1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody Department department, @PathVariable int id) {
         try {
-            departmentService.updateDepartment(department1);
+            departmentService.update(department, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/department/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deleteDepartment(@PathVariable Integer id_department) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            departmentService.deleteDepartmentById(id_department);
+            departmentService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-
 }

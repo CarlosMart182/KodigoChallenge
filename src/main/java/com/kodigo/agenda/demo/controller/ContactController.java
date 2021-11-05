@@ -3,6 +3,8 @@ package com.kodigo.agenda.demo.controller;
 import com.kodigo.agenda.demo.model.Contact;
 import com.kodigo.agenda.demo.model.Person;
 import com.kodigo.agenda.demo.service.IContactService;
+import com.kodigo.agenda.demo.service.IPersonService;
+import com.kodigo.agenda.demo.utility.RegisterExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,62 +17,71 @@ import java.util.List;
 @RestController
 @RequestMapping("/app/v1/contact")
 public class ContactController {
-    @Autowired
-    private final IContactService contactService;
+    private IContactService contactService;
 
+    @Autowired
     public ContactController(IContactService contactService) {
         this.contactService = contactService;
     }
 
-    @RequestMapping(value = "/api/contact", method = RequestMethod.GET)
-    public List<Contact> findAllContacts() {
-        try{
-            List<Contact> test = contactService.findAllContacts();
-            test.forEach(System.out::println);
-            return test;
-        } catch (Exception e){
-            return (List<Contact>) ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
-    @RequestMapping(value = "/api/contact/{id}", method = RequestMethod.GET)
-    public Contact findContactById(@PathVariable Integer id_contact) {
-        try{
-            return contactService.findContactByID(id_contact);
-        } catch (Exception e){
-            return new Contact(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/api/contact", method = RequestMethod.POST)
-    public ResponseEntity<Object> saveContact(@RequestBody Contact contact) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Contact> get(@PathVariable("id") int id) {
         try {
-            Contact contactSaved = contactService.saveContact(contact);
+            Contact contact = contactService.get(id);
+            return new ResponseEntity<Contact>(contact, HttpStatus.OK);
+
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<Object> create(@RequestBody Contact contact) {
+        try {
+            Contact contactSaved = contactService.create(contact);
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(contactSaved.getId_contact()).toUri();
             return ResponseEntity.created(location).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "/api/contact", method = RequestMethod.PUT)
-    public ResponseEntity<Object> updateContact(@RequestBody Contact contact, @PathVariable Contact contact1) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@RequestBody Contact contact, @PathVariable int id) {
         try {
-            contactService.updateContact(contact1);
+            contactService.update(contact, id);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @RequestMapping(value = "api/contact/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> deleteContactById(@PathVariable Integer id_contact) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
-            contactService.deleteContactById(id_contact);
+            contactService.delete(id);
             return ResponseEntity.status(HttpStatus.OK).build();
-        }  catch (Exception e) {
+        } catch (RegisterExistException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
         }
+    }
+
+
+    @GetMapping("/find")
+    public List<Contact> findAll() throws Exception {
+        return contactService.findAll();
+
     }
 }

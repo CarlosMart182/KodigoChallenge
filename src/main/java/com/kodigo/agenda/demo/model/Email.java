@@ -22,13 +22,13 @@ public class Email implements Serializable{
     @Getter @Setter
     @OneToOne
     @JoinColumn(name="id_type_of_email", nullable=false)
-    private EmailType emailType;
+    private EmailType id_type_of_email;
 
     @JsonIgnore
     @Getter @Setter
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name="id_contact", nullable=false)
-    private Contact contact;
+    private Contact id_contact;
 
     @Getter @Setter @Column(name = "email")
     private String email;
@@ -36,10 +36,7 @@ public class Email implements Serializable{
     public Email(Object o, HttpStatus internalServerError) {
     }
 
-    public Email(int id_email, EmailType emailType, Contact contact, String email) {
-        this.id_email = id_email;
-        this.emailType = emailType;
-        this.contact = contact;
-        this.email = email;
+    public Email() {
+
     }
 }
